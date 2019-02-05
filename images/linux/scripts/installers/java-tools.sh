@@ -10,8 +10,8 @@ source $HELPER_SCRIPTS/document.sh
 
 DEFAULT_JDK_VERSION=8
 
-#Install Azul jdks
-#Documentation for Azul JDK installation can be found here: https://www.azul.com/downloads/azure-only/zulu/
+# Install the Azul Systems Zulu JDKs
+# See https://www.azul.com/downloads/azure-only/zulu/
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
 apt-add-repository "deb http://repos.azul.com/azure-only/zulu/apt stable main"
 apt-get -q update
@@ -30,14 +30,14 @@ apt-fast install -y --no-install-recommends ant ant-optional
 echo "ANT_HOME=/usr/share/ant" | tee -a /etc/environment
 
 # Install Maven
-curl -sL http://www-eu.apache.org/dist/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.zip -o maven.zip
+curl -sL http://www-eu.apache.org/dist/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.zip -o maven.zip
 unzip -d /usr/share maven.zip
 rm maven.zip
-ln -s /usr/share/apache-maven-3.5.4/bin/mvn /usr/bin/mvn
-echo "M2_HOME=/usr/share/apache-maven-3.5.4" | tee -a /etc/environment
+ln -s /usr/share/apache-maven-3.6.0/bin/mvn /usr/bin/mvn
+echo "M2_HOME=/usr/share/apache-maven-3.6.0" | tee -a /etc/environment
 
 # Install Gradle
-gradle_version="4.10"
+gradle_version="5.1.1"
 curl -sL https://services.gradle.org/distributions/gradle-"${gradle_version}"-bin.zip -o gradle-"${gradle_version}".zip
 unzip -d /usr/share gradle-"${gradle_version}".zip
 ln -s /usr/share/gradle-"${gradle_version}"/bin/gradle /usr/bin/gradle
@@ -52,7 +52,6 @@ for cmd in gradle java javac mvn ant; do
         exit 1
     fi
 done
-
 
 # Document what was added to the image
 echo "Lastly, documenting what we added to the metadata file"

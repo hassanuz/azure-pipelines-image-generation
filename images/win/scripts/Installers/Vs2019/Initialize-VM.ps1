@@ -4,6 +4,21 @@
 ##  Desc:  VM initialization script, machine level configuration
 ################################################################################
 
+function Disable-InternetExplorerESC {
+    $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+    $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
+    Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0 -Force
+    Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0 -Force
+    Stop-Process -Name Explorer -Force -ErrorAction Continue
+    Write-Host "IE Enhanced Security Configuration (ESC) has been disabled."
+}
+
+function Disable-InternetExplorerWelcomeScreen {
+    $AdminKey = "HKLM:\Software\Policies\Microsoft\Internet Explorer\Main"
+    New-Item -Path $AdminKey -Value 1 -Force
+    Set-ItemProperty -Path $AdminKey -Name "DisableFirstRunCustomize" -Value 1 -Force
+    Write-Host "Disabled IE Welcome screen"
+}
 
 function Disable-UserAccessControl {
     Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 00000000 -Force
@@ -32,19 +47,23 @@ else {
     Write-Host "Windows Update key does not exist"
 }
 
-# Insatll Windows .NET Features
+# Install .NET Framework 3.5 (required by Chocolatey)
+Install-WindowsFeature -Name NET-Framework-Features -IncludeAllSubFeature
+# Explicitly install all 4.7 sub features to include ASP.Net. 
+# As of  1/16/2019, WinServer 19 lists .Net 4.7 as NET-Framework-45-Features
 Install-WindowsFeature -Name NET-Framework-45-Features -IncludeAllSubFeature
-Install-WindowsFeature -Name BITS -IncludeAllSubFeature
-Install-WindowsFeature -Name DSC-Service
-
-# Install Data Deduplication filter driver, but don't enable it on any drives
-Install-WindowsFeature -Name FS-Data-Deduplication
 
 Write-Host "Disable UAC"
 Disable-UserAccessControl
 
+Write-Host "Disable IE Welcome Screen"
+Disable-InternetExplorerWelcomeScreen
+
+Write-Host "Disable IE ESC"
+Disable-InternetExplorerESC
+
 Write-Host "Setting local execution policy"
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope MachinePolicy -ErrorAction Continue | Out-Null
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine  -ErrorAction Continue | Out-Null
 Get-ExecutionPolicy -List
 
 
@@ -76,7 +95,8 @@ Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey
 # Turn off confirmation
 choco feature enable -n allowGlobalConfirmation
 
-
+# Install webpi
+choco install webpicmd -y
 
 # Expand disk size of OS drive
 
@@ -93,13 +113,12 @@ Write-Host "Disk sizes after expansion"
 wmic logicaldisk get size,freespace,caption
 
 
-
 # Adding description of the software to Markdown
 
 $Content = @"
-# VSTS Windows Container(1803) image
+# Azure Pipelines Hosted Windows 2019 with VS2019 image
 
-The following software is installed on machines in the VSTS **Windows Container(1803)** pool.
+The following software is installed on machines in the Azure Pipelines **Hosted Windows 2019 with VS2019** pool.
 
 Components marked with **\*** have been upgraded since the previous version of the image.
 
